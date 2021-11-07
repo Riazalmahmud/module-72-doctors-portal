@@ -1,6 +1,6 @@
 import initializeFirebase from "../Pages/Login/Login/Firebase/firebase.init";
 import { useState, useEffect } from 'react';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, onAuthStateChanged, signOut } from "firebase/auth";
 
 
 // initialize firebase app
@@ -12,12 +12,22 @@ const useFirebase = () => {
     const [authError, setAuthError] = useState('');
 
     const auth = getAuth();
-
-    const registerUser = (email, password) => {
+    const googleSigIn = new GoogleAuthProvider();
+    const registerUser = (email, password, name, history) => {
         setIsLoading(true);
         createUserWithEmailAndPassword(auth, email, password)
             .then((userCredential) => {
                 setAuthError('');
+                const newUser = { email, displayName: name };
+                setUser(newUser);
+                updateProfile(auth.currentUser, {
+                    displayName: name
+                }).then(() => {
+
+                }).catch((error) => {
+
+                });
+                history.replace('/');
             })
             .catch((error) => {
                 setAuthError(error.message);
@@ -38,6 +48,19 @@ const useFirebase = () => {
                 setAuthError(error.message);
             })
             .finally(() => setIsLoading(false));
+    }
+
+    // google signin 
+    const signInWithGoogle = (location, history) => {
+        setIsLoading(true);
+        signInWithPopup(auth, googleSigIn)
+            .then((result) => {
+
+                const user = result.user;
+                setUser(user)
+            }).catch((error) => {
+
+            }).finally(() => setIsLoading(false));
     }
 
     // observer user state
@@ -68,6 +91,7 @@ const useFirebase = () => {
         isLoading,
         authError,
         registerUser,
+        signInWithGoogle,
         loginUser,
         logout,
     }
